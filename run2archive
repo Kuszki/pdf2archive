@@ -1,0 +1,39 @@
+#!/bin/bash
+
+rm -f zrobione.txt
+rm -f pominiete.txt
+rm -f bledne.txt
+
+parallel \
+	--jobs 12 \
+	--colsep=';' \
+	--delay=0.25s \
+	--arg-file=lista.csv \
+./pdf2archive {1} {2} \
+	--validate=verapdf/verapdf \
+	--good=zrobione.txt \
+	--pass=pominiete.txt \
+	--bad=bledne.txt \
+	--upolicy=skip \
+	--cpolicy=1 \
+	--title={3} \
+	--author={4} \
+	--subject={5} \
+	--keywords={6} \
+	--creator={7}
+	
+if [ -e lista.csv ]; then
+	echo "Wszystkich plików:" $(wc -l lista.csv)
+fi
+
+if [ -e zrobione.txt ]; then
+	echo "Przetworzono:" $(wc -l zrobione.txt)
+fi
+
+if [ -e pominiete.txt ]; then
+	echo "Pominięto:" $(wc -l pominiete.txt)
+fi
+
+if [ -e bledne.txt ]; then
+	echo "Błędne:" $(wc -l bledne.txt)
+fi

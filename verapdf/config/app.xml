@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<appConfig type="VALIDATE_EXTRACT" maxFails="100" isOverwrite="false" format="MRR" isVerbose="false">
+<appConfig type="VALIDATE" maxFails="100" isOverwrite="false" format="MRR" isVerbose="false">
     <fixerFolder></fixerFolder>
     <wikiPath>https://github.com/veraPDF/veraPDF-validation-profiles/wiki/</wikiPath>
     <reportFile></reportFile>

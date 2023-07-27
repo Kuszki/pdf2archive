@@ -9,6 +9,11 @@ veraPDF-apps
 [![CodeCov Coverage](https://img.shields.io/codecov/c/github/veraPDF/veraPDF-apps.svg)](https://codecov.io/gh/veraPDF/veraPDF-apps/ "CodeCov coverage")
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/881d40fed7b54552839a347575e3ad80)](https://www.codacy.com/app/carlwilson/veraPDF-apps?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=veraPDF/veraPDF-apps&amp;utm_campaign=Badge_Grade)
 
+[![GitHub issues](https://img.shields.io/github/issues/veraPDF/veraPDF-apps.svg)](https://github.com/veraPDF/veraPDF-apps/issues "Open issues on GitHub")
+[![GitHub issues](https://img.shields.io/github/issues-closed/veraPDF/veraPDF-apps.svg)](https://github.com/veraPDF/veraPDF-apps/issues-closed "Open issues on GitHub")
+[![GitHub issues](https://img.shields.io/github/issues-pr/veraPDF/veraPDF-apps.svg)](https://github.com/veraPDF/veraPDF-apps/issues-pr "Open issues on GitHub")
+[![GitHub issues](https://img.shields.io/github/issues-pr-closed/veraPDF/veraPDF-apps.svg)](https://github.com/veraPDF/veraPDF-apps/issues-pr-closed "Open issues on GitHub")
+
 Licensing
 ---------
 The veraPDF PDF/A Validation Library is dual-licensed, see:
@@ -25,10 +30,10 @@ Quick Start
 
 ### veraPDF GUI
 #### Download release version
-You can download a Java-based installer for the latest veraPDF GUI release [from our download site](http://downloads.verapdf.org/rel/verapdf-installer.zip). The current installation process requires Java 1.7 to be pre-installed.
+You can download a Java-based installer for the latest veraPDF GUI release [from our download site](https://software.verapdf.org/rel/verapdf-installer.zip). The current installation process requires Java 1.7 to be pre-installed.
 
 #### Download latest development version
-If you want to try the latest development version you can obtain it from our [development download site](http://downloads.verapdf.org/dev/http://downloads.verapdf.org/dev/verapdf-installer.zip). Be aware that we release development snapshots regularly, often more than once a day. While we try to ensure that development builds are well tested there are no guarantees.
+If you want to try the latest development version you can obtain it from our [development download site](https://software.verapdf.org/dev/verapdf-installer.zip). Be aware that we release development snapshots regularly, often more than once a day. While we try to ensure that development builds are well tested there are no guarantees.
 
 #### Install from zip package
 Once downloaded unzip the archive which contains the installer jar with batch and shell scripts to launch, the zip contents are as follows:
@@ -41,7 +46,7 @@ Windows users should run the 'verapdf-install.bat' dos batch file, while Linux a
 
     java - jar <path-to-installer-jar>/verapdf-izpack-installer-1.4.0.jar
 
-####Linux full command line download and install
+#### Linux full command line download and install
 Linux users can download and execute the veraPDF installer using the following commands:
 
     wget http://downloads.verapdf.org/rel/verapdf-installer.zip
@@ -49,10 +54,10 @@ Linux users can download and execute the veraPDF installer using the following c
     cd verapdf-<version>
     ./verapdf-install.sh
 
-####veraPDF GUI manual
+#### veraPDF GUI manual
 We've prepared a manual for the GUI which is included in the library project and can be [downloaded from GitHub](https://github.com/veraPDF/veraPDF-apps/raw/release-1.4/veraPDFPDFAConformanceCheckerGUI.pdf).
 
-####JVM configuration options
+#### JVM configuration options
 The startup script found in the install dir, e.g. `.../verapdf/verapdf-gui` for Linux, or `.../verapdf/verapdf-gui.bat` for Windows can be used to pass
 configuration options to the JVM. This is done by setting `$JAVA_OPTS` for Linux, or `%JAVA_OPTS%` in the Window batch file. Alternatively these can be
 passed directly as parameters when calling the shell or batch script.
@@ -90,7 +95,7 @@ or download the latest [tar archive](https://github.com/veraPDF/veraPDF-apps/arc
 Move to the downloaded project directory and call Maven install:
 
     cd veraPDF-apps
-    mvn clean install -P clone-test-resources
+    mvn clean install
 
 #### Testing the build
 You can test your build by running the GUI application from the VeraPDF Library GUI `gui` sub-module.

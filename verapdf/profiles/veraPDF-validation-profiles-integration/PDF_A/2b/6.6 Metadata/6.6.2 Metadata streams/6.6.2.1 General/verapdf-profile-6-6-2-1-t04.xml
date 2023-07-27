@@ -13,14 +13,12 @@
 			as defined by Extensible Markup Language (XML) 1.0 (Third Edition), 2.1, and the RDF/XML Syntax Specification (Revised).</description>
             <test>isSerializationValid</test>
             <error>
-                <message>%1</message>
-                <arguments>
-                    <argument>errorMessage</argument>
-                </arguments>
+                <message>A metadata stream is serialized incorrectly and can not be parsed.</message>
+                <arguments/>
             </error>
             <references>
                 <reference specification="XMP Specification September 2005" clause=""/>
-                <reference specification="Extensible Markup Language (XML) 1.0 (Third Edition), 04 February 2004" clause="2.1"/>				
+                <reference specification="Extensible Markup Language (XML) 1.0 (Third Edition), 04 February 2004" clause="2.1"/>
                 <reference specification="RDF/XML Syntax Specification (Revised), 10 February 2004" clause=""/>
             </references>
         </rule>
