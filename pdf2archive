@@ -168,6 +168,9 @@ done
 
 #=====# SET UP ALL THE STUFF #=====#
 
+OUTDIR=$(dirname "${OUTPUT}")
+INFILE=$(basename "${INPUT}")
+
 if [ "$OUTPUT" == "" ]; then
 	OUTPUT="${INPUT%.pdf}-PDFA.pdf"
 fi
@@ -218,8 +221,6 @@ fi
 
 #=====# FILE NAMES #=====#
 
-OUTDIR=$(dirname "${OUTPUT}")
-INFILE=$(basename "${INPUT}")
 TMPOUTPUT=$(mktemp -p /dev/shm/ XXXXXXXXXX.pdf)
 TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
 TMPDIR=$(mktemp -d -p /dev/shm/ XXXXXXXXXX.dir)
