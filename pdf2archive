@@ -24,19 +24,19 @@ run() {
 
 log_good() {
 	[ "$DONE_FILE" != "" ] && echo "$INFILE" >> "$DONE_FILE"
-			
+
 	echo -e "Processing $INFILE \\t\\t[DONE]"
 }
 
 log_bad() {
-	[ "$BAD_FILE" != "" ] && echo "$INFILE" >> "$BAD_FILE"   
-		
+	[ "$BAD_FILE" != "" ] && echo "$INFILE" >> "$BAD_FILE"
+
 	echo -e "Processing $INFILE \\t\\t[INVALID]"
 }
 
 log_pass() {
-	[ "$PASS_FILE" != "" ] && echo "$INFILE" >> "$PASS_FILE"   
-		
+	[ "$PASS_FILE" != "" ] && echo "$INFILE" >> "$PASS_FILE"
+
 	echo -e "Processing $INFILE \\t\\t[FAIL]"
 }
 
@@ -44,19 +44,19 @@ do_finalize() {
 	if [ $1 -eq 0 ]; then
 
 		if [ "$VALIDATE" != "" ]; then
-			
+
 			eval "$VALIDATE" --extract --flavour 3b --format text "$2" >/dev/null
-			
+
 			if [ $? -eq 0 ]; then
 				log_good
 			else
 				log_bad
 			fi
-		
+
 		else
 			log_good
 		fi
-		
+
 	else
 		if $DIRMADE; then
 			rm -d $(dirname "${OUTPUT}")
@@ -68,7 +68,7 @@ do_finalize() {
 
 #=====# CHECKS #=====#
 if [ "$(which gs)" == "" ]; then
-	echo "  ERROR: Ghostscript is not installed or it's not in the path"
+	echo "ERROR: Ghostscript is not installed or it's not in the path"
 	exit
 fi
 
@@ -142,7 +142,7 @@ while [ "$1" != "" ]; do
 			elif [ "$VALUE" == "low" ]; then
 				QUALITYOPTS="-dPDFSETTINGS=/screen"
 			else
-				echo "  ERROR: unknown quality option '$VALUE'"
+				echo "ERROR: unknown quality option '$VALUE'"
 				exit 1
 			fi
 			;;
@@ -152,12 +152,12 @@ while [ "$1" != "" ]; do
 			elif [ "$OUTPUT" == "" ]; then
 				OUTPUT=$PARAM
 			else
-				echo "  ERROR: too many PDF files as input!"
+				echo "ERROR: too many PDF files as input!"
 				exit 1
 			fi
 			;;
 		*)
-			echo "  ERROR: unknown parameter \"$PARAM\""
+			echo "ERROR: unknown parameter \"$PARAM\""
 			exit 1
 			;;
 	esac
@@ -174,15 +174,15 @@ if [ "$OUTPUT" == "" ]; then
 fi
 
 if [ ! -f "$INPUT" ]; then
-		
+
 	log_pass
 	exit 1
 
 fi
 
 if [ -f "$OUTPUT" ]; then
-		
-	[ "$UPOLICY" == "skip" ] && exit 0	
+
+	[ "$UPOLICY" == "skip" ] && exit 0
 	[ "$UPOLICY" == "overwrite" ] && rm "$OUTPUT"
 
 fi
@@ -201,11 +201,7 @@ MARKTMPFILE=$TMPDIR/mark.ps
 
 #=====# GENERATE INFOTMPFILE #=====#
 
-echo \
-"%!PS
-% Extract PDF info in a minimal way.
-% Inspired by 'toolbin/pdf_info.ps'.
-
+echo "%!PS
 /QUIET true def
 File dup (r) file runpdfbegin
 Trailer /Info knownoget {
@@ -219,8 +215,7 @@ dup /CreationDate knownoget { (__knowninfoCreationDate: ) print = flush } if
 dup /ModDate knownoget { (__knowninfoModDate: ) print = flush } if
 dup /Trapped knownoget { (__knowninfoTrapped: ) print = flush } if
 } if
-quit
-" > $INFOTMPFILE
+quit" > $INFOTMPFILE
 
 #=====# COLLECT METADATA #=====#
 
@@ -236,11 +231,11 @@ METADUMP=$(gs -dNOSAFER -dNODISPLAY -q -sFile="$INPUT" $INFOTMPFILE | iconv -f u
 [ -z ${PDFTRAPPED+x} ] && PDFTRAPPED=$(echo "$METADUMP" | grep "__knowninfoTrapped: " | sed "s/^__knowninfoTrapped: //g")
 
 if [ "$PDFTRAPPED" != "" ]; then
-  PDFTRAPPED="/$(tr '[:lower:]' '[:upper:]' <<< ${PDFTRAPPED:0:1})$(tr '[:upper:]' '[:lower:]' <<< ${PDFTRAPPED:1})"
+	PDFTRAPPED="/$(tr '[:lower:]' '[:upper:]' <<< ${PDFTRAPPED:0:1})$(tr '[:upper:]' '[:lower:]' <<< ${PDFTRAPPED:1})"
 fi
 
 if [ "$PDFTRAPPED" != "/True" ] && [ "$PDFTRAPPED" != "/False" ]; then
-  PDFTRAPPED=""
+	PDFTRAPPED=""
 fi
 
 #=====# PRINT DEBUG INFO #=====#
@@ -270,7 +265,7 @@ def
 [ /Title (Document)" > $PSTMPFILE
 
 if [ "$PDFTRAPPED" != "" ]; then
-  echo "  /Trapped $PDFTRAPPED" >> $PSTMPFILE
+	echo "  /Trapped $PDFTRAPPED" >> $PSTMPFILE
 fi
 
 echo \
@@ -312,32 +307,32 @@ echo "%% Watermark ps file
 			watermarkFont
 			watermarkColor
 			watermarkAlpha
-			
+
 			pageWidth pageHeight translate
 			0 0 moveto
 			watermarkText false charpath flattenpath pathbbox
 			4 2 roll pop pop
 			-5 -5 moveto
-			
+
 			watermarkAngle rotate
 			-1 mul exch -1 mul exch
 			rmoveto
-			
+
 			watermarkText show
 
 			grestore
 			true
 		} ifelse
 	} bind
->> setpagedevice" > "$MARKTMPFILE"
+>> setpagedevice" > $MARKTMPFILE
 
 #=====# DO THE ACTUAL CONVERSION #=====#
 
 [ "$WATERMARK" == "" ] && MARKTMPFILE=""
 
-if [ ! -d "$OUTDIR" ]; then 
+if [ ! -d "$OUTDIR" ]; then
 	mkdir -p "$OUTDIR" && DIRMADE=true
-	
+
 	if [ $? != 0 ]; then
 		log_bad
 		exit 1
@@ -355,7 +350,7 @@ run gs $MSGOPTS \
 	-dAutoFilterColorImages=false \
 	-dAutoFilterGrayImages=false \
 	-sDEVICE=pdfwrite \
-	-sOutputFile="$TMPFILE" "$INPUT" $MARKTMPFILE && \
+	-sOutputFile="$TMPFILE" $MARKTMPFILE "$INPUT" && \
 run gs $MSGOPTS \
 	-dPDFA=3 -dBATCH -dNOPAUSE -dNOOUTERSAVE $QUALITYOPTS \
 	-dPDFACompatibilityPolicy=$CPOLICY \
@@ -378,7 +373,7 @@ run exiftool -overwrite_original \
 	-xmp:CreatorTool="$PDFCREATOR" \
 	-q "$TMPOUTPUT" && \
 cp "$TMPOUTPUT" "$OUTPUT"
-	
+
 do_finalize $? "$TMPOUTPUT"
 
 rm -R "$TMPDIR"
