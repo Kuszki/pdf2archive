@@ -10,7 +10,7 @@ run() {
 	if $DEBUG; then
 		"$@"
 	else
-		"$@" 2>/dev/null
+		"$@" &>/dev/null
 	fi
 }
 

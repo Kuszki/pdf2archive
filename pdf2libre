@@ -84,9 +84,10 @@ done
 
 #=====# SET UP ALL THE STUFF #=====#
 
+TMPDIRRR=$(mktemp -d -p /dev/shm/ XXXXXXXXXXXX.dir)
 OUTDIR=$(dirname "${OUTPUT}")
 INFILE=$(basename "${INPUT}")
-TMPOUT="$OUTDIR/$INFILE"
+TMPOUT="$TMPDIRRR/$INFILE"
 
 if [ "$OUTPUT" == "" ]; then
 	OUTPUT="${INPUT%.pdf}-PDFA.pdf"
@@ -127,9 +128,10 @@ if [ ! -d "$OUTDIR" ]; then
 	fi
 fi
 
-run libreoffice \
+run libreoffice --headless \
+	-env:UserInstallation="file://$TMPDIRRR" \
 	--convert-to "$FORMAT" \
-	--outdir "$OUTDIR" \
+	--outdir "$TMPDIRRR" \
 	 "$INPUT" && \
 run exiftool -overwrite_original \
 	-AllDates=now \
@@ -143,10 +145,9 @@ run exiftool -overwrite_original \
 	-xmp:Description="$PDFSUBJECT" \
 	-xmp:Creator="$PDFAUTHOR" \
 	-xmp:CreatorTool="$PDFCREATOR" \
-	-q "$TMPOUT"
+	-q "$TMPOUT" && \
+cp "$TMPOUT" "$OUTPUT"
 
-if [ "$TMPOUT" != "$OUTPUT" ]; then
-	mv "$TMPOUT" "$OUTPUT"
-fi
+do_finalize $? "$TMPOUT"
 
-do_finalize $? "$TMPOUTPUT"
+rm -R "$TMPDIRRR"
