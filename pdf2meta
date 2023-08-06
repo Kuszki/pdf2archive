@@ -82,6 +82,17 @@ if [ ! -f "$INPUT" ]; then
 
 fi
 
+if $DEBUG; then
+	echo "  DEBUG: running PDF2META, version $VERSION"
+	echo "  DEBUG: using Exiftool binary at $(which exiftool), version $(exiftool -ver)"
+	echo "  DEBUG: the input file is '$INPUT'"
+	echo "  DEBUG: PDF title '$PDFTITLE'"
+	echo "  DEBUG: PDF author '$PDFAUTHOR'"
+	echo "  DEBUG: PDF subject '$PDFSUBJECT'"
+	echo "  DEBUG: PDF keywords '$PDFKEYWORDS'"
+	echo "  DEBUG: PDF creator '$PDFCREATOR'"
+fi
+
 run exiftool -overwrite_original \
 	-AllDates=now \
 	-Title="$PDFTITLE" \

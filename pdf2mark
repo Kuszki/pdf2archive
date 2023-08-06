@@ -2,9 +2,6 @@
 
 source $(dirname $0)/pdf2common
 
-PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.ps)
-TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.pdf)
-
 OUTDIR=$(dirname "${OUTPUT}")
 INFILE=$(basename "${INPUT}")
 
@@ -77,11 +74,20 @@ if [ ! -d "$OUTDIR" ]; then
 
 	if [ $? != 0 ]; then
 		log_bad
-
-		rm "$PSFILE"
-		rm "$TMPFILE"
 		exit 1
 	fi
+fi
+
+PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.ps)
+TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.pdf)
+
+if $DEBUG; then
+	echo "  DEBUG: running PDF2MARK, version $VERSION"
+	echo "  DEBUG: using Ghostscript binary at $(which gs), version $(gs --version)"
+	echo "  DEBUG: the input file is '$INPUT'"
+	echo "  DEBUG: the output file is '$OUTPUT'"
+	echo "  DEBUG: the intermediate processing file is $TMPFILE"
+	echo "  DEBUG: PDF watermark '$WATERMARK'"
 fi
 
 echo "%% Watermark ps file

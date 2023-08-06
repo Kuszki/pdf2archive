@@ -108,7 +108,7 @@ if [ -f "$OUTPUT" ]; then
 fi
 
 if $DEBUG; then
-	echo "  DEBUG: running PDF2ARCHIVE, version $VERSION"
+	echo "  DEBUG: running PDF2LIBRE, version $VERSION"
 	echo "  DEBUG: using Libreoffice binary at $(which libreoffice), version $(libreoffice --version)"
 	echo "  DEBUG: the input file is '$INPUT'"
 	echo "  DEBUG: the output file is '$OUTPUT'"
