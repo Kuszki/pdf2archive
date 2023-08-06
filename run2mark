@@ -9,7 +9,7 @@ parallel \
 	--colsep=';' \
 	--delay=0.05s \
 	--arg-file=lista.csv \
-./pdf2mark {2} \
+./pdf2mark {1} {2} \
 	--validate=~/Programy/VeraPDF/verapdf \
 	--good=zrobione.txt \
 	--pass=pominiete.txt \

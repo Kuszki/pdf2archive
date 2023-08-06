@@ -102,35 +102,35 @@ By default described scripts uses files:
 If you need to alter column order, column separator or anything related to input data, just edit selected scriptfile. Also remember to alter `--jobs` and `--delay` to achieve best performance for your machine.
 
 ## Examples
-Convert 'input.pdf' in PDF/A-1B format; the output is 'input-PDFA.pdf':
+Convert 'input.pdf' in PDF/A-3B format; the output is 'input-PDFA.pdf':
 ```
   ./pdf2archive input.pdf
 ```
 
-Convert 'input.pdf' in PDF/A-1B format; the output is 'output.pdf':
+Convert 'input.pdf' in PDF/A-3B format; the output is 'output.pdf':
 ```
   ./pdf2archive input.pdf output.pdf
 ```
 
-Convert 'input.pdf' in PDF/A-1B format and perform a high-quality compression:
+Convert 'input.pdf' in PDF/A-3B format and perform a high-quality compression:
 ```
   ./pdf2archive --quality=high input.pdf
 ```
 
-Convert 'input.pdf' in PDF/A-1B format and specify the document title:
+Convert 'input.pdf' in PDF/A-3B format and specify the document title:
 ```
   ./pdf2archive --title="Title of your nice document" input.pdf
 ```
 
-Convert 'input.pdf' in PDF/A-1B format and validate the result:
+Convert 'input.pdf' in PDF/A-3B format and validate the result:
 ```
-  ./pdf2archive --validate input.pdf
+  ./pdf2archive --validate=verapdf/verapdf input.pdf
 ```
 
 ## Credits
 `pdf2archive` script was originaly created by [matteosecli](https://github.com/matteosecli) and this is fork of [pdf2archive](https://github.com/matteosecli/pdf2archive). Big thanks @matteosecli.
 
 ## Licensing
-+ __PDF2ARCHIVE__ is under GPLv3+.
-+ The file __`AdobeRGB1998.icc`__ (included in binary form for portability reasons) is licensed in compliance with Adobe's license agreement: https://www.adobe.com/support/downloads/iccprofiles/icc_eula_win_dist.html.
-+ __VeraPDF__ is dual-licensed under MPLv2+ and GPLv3+: http://verapdf.org/home/#licensing. The launcher scripts have been slightly modified to include a conditional command-line option that deals with the changes introduced by Java 9.
++ `PDF2ARCHIVE` master is under GPLv3+
++ `AdobeRGB1998.icc` is licensed in compliance with Adobe's license agreement, see https://www.adobe.com/support/downloads/iccprofiles/icc_eula_win_dist.html
++ `veraPDF` is dual-licensed under MPLv2+ and GPLv3+, see http://verapdf.org/home/#licensing

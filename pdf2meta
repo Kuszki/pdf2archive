@@ -48,6 +48,15 @@ while [ "$1" != "" ]; do
 		--creator)
 			PDFCREATOR=$VALUE
 			;;
+		--good)
+			DONE_FILE=$VALUE
+			;;
+		--bad)
+			BAD_FILE=$VALUE
+			;;
+		--pass)
+			PASS_FILE=$VALUE
+			;;
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
 				INPUT=$PARAM
@@ -87,4 +96,4 @@ run exiftool -overwrite_original \
 	-xmp:CreatorTool="$PDFCREATOR" \
 	-q "$INPUT"
 
-do_finalize $? "$TMPOUTPUT"
+do_finalize $? "$INPUT"

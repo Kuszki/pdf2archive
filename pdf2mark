@@ -2,8 +2,8 @@
 
 source $(dirname $0)/pdf2common
 
-PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
-TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
+PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.ps)
+TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.pdf)
 
 OUTDIR=$(dirname "${OUTPUT}")
 INFILE=$(basename "${INPUT}")
@@ -41,6 +41,8 @@ while [ "$1" != "" ]; do
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
 				INPUT=$PARAM
+			elif [ "$OUTPUT" == "" ]; then
+				OUTPUT=$PARAM
 			else
 				echo "ERROR: too many PDF files as input!"
 				exit 1
@@ -121,7 +123,7 @@ echo "%% Watermark ps file
 >> setpagedevice" >> "$PSFILE"
 
 run gs $MSGOPTS \
-	-dBATCH -dNOPAUSE -dALLOWPSTRANSPARENCY -sDEVICE=pdfwrite
+	-dBATCH -dNOPAUSE -dALLOWPSTRANSPARENCY -sDEVICE=pdfwrite \
 	-sOutputFile="$TMPFILE" "$PSFILE" "$INPUT" && \
 cp "$TMPFILE" "$OUTPUT"
 
