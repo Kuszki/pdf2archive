@@ -1,0 +1,59 @@
+#!/bin/bash
+
+MSGOPTS="-dQUIET -sstdout=/dev/null"
+VALIDATE=""
+DONE_FILE=""
+BAD_FILE=""
+PASS_FILE=""
+
+run() {
+	if $DEBUG; then
+		"$@"
+	else
+		"$@" 2>/dev/null
+	fi
+}
+
+log_good() {
+	[ "$DONE_FILE" != "" ] && echo "$INFILE" >> "$DONE_FILE"
+
+	echo -e "Processing $INFILE \\t\\t[DONE]"
+}
+
+log_bad() {
+	[ "$BAD_FILE" != "" ] && echo "$INFILE" >> "$BAD_FILE"
+
+	echo -e "Processing $INFILE \\t\\t[INVALID]"
+}
+
+log_pass() {
+	[ "$PASS_FILE" != "" ] && echo "$INFILE" >> "$PASS_FILE"
+
+	echo -e "Processing $INFILE \\t\\t[FAIL]"
+}
+
+do_finalize() {
+	if [ $1 -eq 0 ]; then
+
+		if [ "$VALIDATE" != "" ]; then
+
+			eval "$VALIDATE" --extract --flavour 3b --format text "$2" >/dev/null
+
+			if [ $? -eq 0 ]; then
+				log_good
+			else
+				log_bad
+			fi
+
+		else
+			log_good
+		fi
+
+	else
+		if $DIRMADE; then
+			rm -d $(dirname "${OUTPUT}")
+		fi
+
+		log_pass
+	fi
+}

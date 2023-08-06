@@ -1,70 +1,12 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-VERSION="0.3.2"
-INFILE=""
-INPUT=""
-OUTPUT=""
-QUALITYOPTS=""
-DEBUG=false
-VALIDATE=false
-MSGOPTS="-dQUIET -sstdout=/dev/null"
-VERAMSGOPTS=""
-DONE_FILE=""
+source $(dirname $0)/pdf2common
+
+VERSION="0.3.3"
 CPOLICY=1
+DEBUG=false
 DIRMADE=false
 UPOLICY="skip"
-
-run() {
-	if $DEBUG; then
-		"$@"
-	else
-		"$@" 2>/dev/null
-	fi
-}
-
-log_good() {
-	[ "$DONE_FILE" != "" ] && echo "$INFILE" >> "$DONE_FILE"
-
-	echo -e "Processing $INFILE \\t\\t[DONE]"
-}
-
-log_bad() {
-	[ "$BAD_FILE" != "" ] && echo "$INFILE" >> "$BAD_FILE"
-
-	echo -e "Processing $INFILE \\t\\t[INVALID]"
-}
-
-log_pass() {
-	[ "$PASS_FILE" != "" ] && echo "$INFILE" >> "$PASS_FILE"
-
-	echo -e "Processing $INFILE \\t\\t[FAIL]"
-}
-
-do_finalize() {
-	if [ $1 -eq 0 ]; then
-
-		if [ "$VALIDATE" != "" ]; then
-
-			eval "$VALIDATE" --extract --flavour 3b --format text "$2" >/dev/null
-
-			if [ $? -eq 0 ]; then
-				log_good
-			else
-				log_bad
-			fi
-
-		else
-			log_good
-		fi
-
-	else
-		if $DIRMADE; then
-			rm -d $(dirname "${OUTPUT}")
-		fi
-
-		log_pass
-	fi
-}
 
 #=====# CHECKS #=====#
 if [ "$(which gs)" == "" ]; then
@@ -80,9 +22,6 @@ while [ "$1" != "" ]; do
 	PARAM=`echo $1 | awk -F= '{print $1}'`
 	VALUE=`echo $1 | awk -F= '{print $2}'`
 	case $PARAM in
-		-h | --help)
-			exit
-			;;
 		-v | --version)
 			echo $VERSION
 			exit
@@ -166,12 +105,12 @@ done
 
 #=====# SET UP ALL THE STUFF #=====#
 
-OUTDIR=$(dirname "${OUTPUT}")
-INFILE=$(basename "${INPUT}")
-
 if [ "$OUTPUT" == "" ]; then
 	OUTPUT="${INPUT%.pdf}-PDFA.pdf"
 fi
+
+OUTDIR=$(dirname "${OUTPUT}")
+INFILE=$(basename "${INPUT}")
 
 if [ ! -f "$INPUT" ]; then
 
@@ -335,6 +274,8 @@ if [ ! -d "$OUTDIR" ]; then
 
 	if [ $? != 0 ]; then
 		log_bad
+
+		rm -R "$TMPDIR"
 		exit 1
 	fi
 fi
@@ -377,3 +318,4 @@ cp "$TMPOUTPUT" "$OUTPUT"
 do_finalize $? "$TMPOUTPUT"
 
 rm -R "$TMPDIR"
+

@@ -1,17 +1,11 @@
 #!/bin/bash
 
+source $(dirname $0)/pdf2common
+
 VERSION="0.0.1"
 INFILE=""
 INPUT=""
 DEBUG=false
-
-run() {
-	if $DEBUG; then
-		"$@"
-	else
-		"$@" 2>/dev/null
-	fi
-}
 
 #=====# INPUT PARSER #=====#
 if [ "$1" == "" ]; then
@@ -21,9 +15,6 @@ while [ "$1" != "" ]; do
 	PARAM=`echo $1 | awk -F= '{print $1}'`
 	VALUE=`echo $1 | awk -F= '{print $2}'`
 	case $PARAM in
-		-h | --help)
-			exit
-			;;
 		-v | --version)
 			echo $VERSION
 			exit
@@ -31,6 +22,9 @@ while [ "$1" != "" ]; do
 		--debug)
 			DEBUG=true
 			MSGOPTS=""
+			;;
+		--validate)
+			VALIDATE=$VALUE
 			;;
 		--cleanmetadata)
 			PDFTITLE=""
@@ -57,22 +51,29 @@ while [ "$1" != "" ]; do
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
 				INPUT=$PARAM
-				INFILE=$(basename "${PARAM}")
 			else
-				echo "  ERROR: too many PDF files as input!"
+				echo "ERROR: too many PDF files as input!"
 				exit 1
 			fi
 			;;
 		*)
-			echo "  ERROR: unknown parameter \"$PARAM\""
+			echo "ERROR: unknown parameter \"$PARAM\""
 			exit 1
 			;;
 	esac
 	shift
 done
 
+INFILE=$(basename "${INPUT}")
 
-[ -f "$INPUT" ] && run exiftool -overwrite_original \
+if [ ! -f "$INPUT" ]; then
+
+	log_pass
+	exit 1
+
+fi
+
+run exiftool -overwrite_original \
 	-AllDates=now \
 	-Title="$PDFTITLE" \
 	-Producer="$PDFCREATOR" \
@@ -84,4 +85,6 @@ done
 	-xmp:Description="$PDFSUBJECT" \
 	-xmp:Creator="$PDFAUTHOR" \
 	-xmp:CreatorTool="$PDFCREATOR" \
-	-q "$INPUT" && echo -e "Updated $INFILE \\t\\t[DONE]"
+	-q "$INPUT"
+
+do_finalize $? "$TMPOUTPUT"

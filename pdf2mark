@@ -1,8 +1,6 @@
 #!/bin/bash
 
-INPUT=$1
-WATERMARK=$2
-OUTPUT=$3
+source $(dirname $0)/pdf2common
 
 PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
 TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
@@ -10,9 +8,79 @@ TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
 OUTDIR=$(dirname "${OUTPUT}")
 INFILE=$(basename "${INPUT}")
 
-[ "$INPUT" == "" ] && exit 1
-[ "$WATERMARK" == "" ] && exit 2
-[ "$OUTPUT" == "" ] && OUTPUT="$OUTDIR/marked_$INFILE"
+if [ "$1" == "" ]; then
+	exit
+fi
+while [ "$1" != "" ]; do
+	PARAM=`echo $1 | awk -F= '{print $1}'`
+	VALUE=`echo $1 | awk -F= '{print $2}'`
+	case $PARAM in
+		-v | --version)
+			echo $VERSION
+			exit
+			;;
+		--debug)
+			DEBUG=true
+			MSGOPTS=""
+			;;
+		--good)
+			DONE_FILE=$VALUE
+			;;
+		--bad)
+			BAD_FILE=$VALUE
+			;;
+		--pass)
+			PASS_FILE=$VALUE
+			;;
+		--validate)
+			VALIDATE=$VALUE
+			;;
+		--mark)
+			WATERMARK=$VALUE
+			;;
+		*.pdf)
+			if [ "$INPUT" == "" ]; then
+				INPUT=$PARAM
+			else
+				echo "ERROR: too many PDF files as input!"
+				exit 1
+			fi
+			;;
+		*)
+			echo "ERROR: unknown parameter \"$PARAM\""
+			exit 1
+			;;
+	esac
+	shift
+done
+
+OUTDIR=$(dirname "${OUTPUT}")
+INFILE=$(basename "${INPUT}")
+
+if [ "$WATERMARK" == "" ]; then
+
+	exit 1
+
+fi
+
+if [ ! -f "$INPUT" ]; then
+
+	log_pass
+	exit 1
+
+fi
+
+if [ ! -d "$OUTDIR" ]; then
+	mkdir -p "$OUTDIR" && DIRMADE=true
+
+	if [ $? != 0 ]; then
+		log_bad
+
+		rm "$PSFILE"
+		rm "$TMPFILE"
+		exit 1
+	fi
+fi
 
 echo "%% Watermark ps file
 /watermarkText { ($WATERMARK) } def
@@ -33,17 +101,17 @@ echo "%% Watermark ps file
 			watermarkFont
 			watermarkColor
 			watermarkAlpha
-			
+
 			pageWidth pageHeight translate
 			0 0 moveto
 			watermarkText false charpath flattenpath pathbbox
 			4 2 roll pop pop
 			-5 -5 moveto
-			
+
 			watermarkAngle rotate
 			-1 mul exch -1 mul exch
 			rmoveto
-			
+
 			watermarkText show
 
 			grestore
@@ -52,8 +120,12 @@ echo "%% Watermark ps file
 	} bind
 >> setpagedevice" >> "$PSFILE"
 
-gs -dBATCH -dNOPAUSE -dALLOWPSTRANSPARENCY -q -sDEVICE=pdfwrite -sOutputFile="$TMPFILE" "$PSFILE" "$INPUT"
-
+run gs $MSGOPTS \
+	-dBATCH -dNOPAUSE -dALLOWPSTRANSPARENCY -sDEVICE=pdfwrite
+	-sOutputFile="$TMPFILE" "$PSFILE" "$INPUT" && \
 cp "$TMPFILE" "$OUTPUT"
+
+do_finalize $? "$TMPFILE"
+
 rm "$PSFILE"
 rm "$TMPFILE"
