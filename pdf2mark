@@ -2,9 +2,6 @@
 
 source $(dirname $0)/pdf2common
 
-OUTDIR=$(dirname "${OUTPUT}")
-INFILE=$(basename "${INPUT}")
-
 if [ "$1" == "" ]; then
 	exit
 fi
