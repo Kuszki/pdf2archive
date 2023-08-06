@@ -1,0 +1,59 @@
+#!/bin/bash
+
+INPUT=$1
+WATERMARK=$2
+OUTPUT=$3
+
+PSFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
+TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
+
+OUTDIR=$(dirname "${OUTPUT}")
+INFILE=$(basename "${INPUT}")
+
+[ "$INPUT" == "" ] && exit 1
+[ "$WATERMARK" == "" ] && exit 2
+[ "$OUTPUT" == "" ] && OUTPUT="$OUTDIR/marked_$INFILE"
+
+echo "%% Watermark ps file
+/watermarkText { ($WATERMARK) } def
+/watermarkFont { /TimesNewRomanBold 20 selectfont } def
+/watermarkColor { 1 0 0 setrgbcolor } def
+/watermarkAlpha { 0.5 .setfillconstantalpha } def
+/watermarkAngle { 0 } def
+
+/pageWidth { currentpagedevice /PageSize get 0 get } def
+/pageHeight { currentpagedevice /PageSize get 1 get } def
+
+<<
+	/EndPage
+	{
+		2 eq { pop false }
+		{
+			gsave
+			watermarkFont
+			watermarkColor
+			watermarkAlpha
+			
+			pageWidth pageHeight translate
+			0 0 moveto
+			watermarkText false charpath flattenpath pathbbox
+			4 2 roll pop pop
+			-5 -5 moveto
+			
+			watermarkAngle rotate
+			-1 mul exch -1 mul exch
+			rmoveto
+			
+			watermarkText show
+
+			grestore
+			true
+		} ifelse
+	} bind
+>> setpagedevice" >> "$PSFILE"
+
+gs -dBATCH -dNOPAUSE -dALLOWPSTRANSPARENCY -q -sDEVICE=pdfwrite -sOutputFile="$TMPFILE" "$PSFILE" "$INPUT"
+
+cp "$TMPFILE" "$OUTPUT"
+rm "$PSFILE"
+rm "$TMPFILE"

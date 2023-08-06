@@ -5,23 +5,23 @@ rm -f pominiete.txt
 rm -f bledne.txt
 
 parallel \
-	--jobs 12 \
+	--jobs 6 \
 	--colsep=';' \
-	--delay=0.25s \
+	--delay=0.15s \
 	--arg-file=lista.csv \
 ./pdf2archive {1} {2} \
 	--validate=verapdf/verapdf \
 	--good=zrobione.txt \
 	--pass=pominiete.txt \
 	--bad=bledne.txt \
-	--upolicy=skip \
-	--cpolicy=1 \
+	--upolicy=update \
 	--title={3} \
 	--author={4} \
 	--subject={5} \
 	--keywords={6} \
-	--creator={7}
-	
+	--creator={7} \
+	--mark={8}
+
 if [ -e lista.csv ]; then
 	echo "Wszystkich plików:" $(wc -l lista.csv)
 fi

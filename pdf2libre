@@ -1,0 +1,211 @@
+#!/bin/bash
+
+VERSION="0.0.1"
+
+INFILE=""
+INPUT=""
+OUTPUT=""
+
+FORMAT='pdf:draw_pdf_Export:{"SelectPdfVersion":{"type":"long","value":"3"}}'
+VALIDATE=false
+MSGOPTS="-dQUIET -sstdout=/dev/null"
+VERAMSGOPTS=""
+DONE_FILE=""
+DIRMADE=false
+UPOLICY="skip"
+DEBUG=false
+
+run() {
+	if $DEBUG; then
+		"$@"
+	else
+		"$@" 2>/dev/null
+	fi
+}
+
+log_good() {
+	[ "$DONE_FILE" != "" ] && echo "$INFILE" >> "$DONE_FILE"
+			
+	echo -e "Processing $INFILE \\t\\t[DONE]"
+}
+
+log_bad() {
+	[ "$BAD_FILE" != "" ] && echo "$INFILE" >> "$BAD_FILE"   
+		
+	echo -e "Processing $INFILE \\t\\t[INVALID]"
+}
+
+log_pass() {
+	[ "$PASS_FILE" != "" ] && echo "$INFILE" >> "$PASS_FILE"   
+		
+	echo -e "Processing $INFILE \\t\\t[FAIL]"
+}
+
+do_finalize() {
+	if [ $1 -eq 0 ]; then
+
+		if [ "$VALIDATE" != "" ]; then
+			
+			eval "$VALIDATE" --extract --flavour 3b --format text "$2" >/dev/null
+			
+			if [ $? -eq 0 ]; then
+				log_good
+			else
+				log_bad
+			fi
+		
+		else
+			log_good
+		fi
+		
+	else
+		if $DIRMADE; then
+			rm -d $(dirname "${OUTPUT}")
+		fi
+
+		log_pass
+	fi
+}
+
+if [ "$1" == "" ]; then
+	exit
+fi
+while [ "$1" != "" ]; do
+	PARAM=`echo $1 | awk -F= '{print $1}'`
+	VALUE=`echo $1 | awk -F= '{print $2}'`
+	case $PARAM in
+		-h | --help)
+			exit
+			;;
+		-v | --version)
+			echo $VERSION
+			exit
+			;;
+		--debug)
+			DEBUG=true
+			MSGOPTS=""
+			;;
+		--cleanmetadata)
+			PDFTITLE=""
+			PDFAUTHOR=""
+			PDFSUBJECT=""
+			PDFKEYWORDS=""
+			PDFCREATOR=""
+			;;
+		--title)
+			PDFTITLE=$VALUE
+			;;
+		--author)
+			PDFAUTHOR=$VALUE
+			;;
+		--subject)
+			PDFSUBJECT=$VALUE
+			;;
+		--keywords)
+			PDFKEYWORDS=$VALUE
+			;;
+		--creator)
+			PDFCREATOR=$VALUE
+			;;
+		--good)
+			DONE_FILE=$VALUE
+			;;
+		--bad)
+			BAD_FILE=$VALUE
+			;;
+		--pass)
+			PASS_FILE=$VALUE
+			;;
+		--validate)
+			VALIDATE=$VALUE
+			;;
+		--upolicy)
+			UPOLICY=$VALUE
+			;;
+		*.pdf)
+			if [ "$INPUT" == "" ]; then
+				INPUT=$PARAM
+			elif [ "$OUTPUT" == "" ]; then
+				OUTPUT=$PARAM
+			else
+				echo "  ERROR: too many PDF files as input!"
+				exit 1
+			fi
+			;;
+		*)
+			echo "  ERROR: unknown parameter \"$PARAM\""
+			exit 1
+			;;
+	esac
+	shift
+done
+
+#=====# SET UP ALL THE STUFF #=====#
+
+OUTDIR=$(dirname "${OUTPUT}")
+INFILE=$(basename "${INPUT}")
+TMPOUT="$OUTDIR/$INFILE"
+
+if [ "$OUTPUT" == "" ]; then
+	OUTPUT="${INPUT%.pdf}-PDFA.pdf"
+fi
+
+if [ ! -f "$INPUT" ]; then
+		
+	log_pass
+	exit 1
+
+fi
+
+if [ -f "$OUTPUT" ]; then
+		
+	[ "$UPOLICY" == "skip" ] && exit 0	
+	[ "$UPOLICY" == "overwrite" ] && rm "$OUTPUT"
+
+fi
+
+if $DEBUG; then
+	echo "  DEBUG: running PDF2ARCHIVE, version $VERSION"
+	echo "  DEBUG: using Libreoffice binary at $(which libreoffice), version $(libreoffice --version)"
+	echo "  DEBUG: the input file is '$INPUT'"
+	echo "  DEBUG: the output file is '$OUTPUT'"
+	echo "  DEBUG: PDF title '$PDFTITLE'"
+	echo "  DEBUG: PDF author '$PDFAUTHOR'"
+	echo "  DEBUG: PDF subject '$PDFSUBJECT'"
+	echo "  DEBUG: PDF keywords '$PDFKEYWORDS'"
+	echo "  DEBUG: PDF creator '$PDFCREATOR'"
+fi
+
+if [ ! -d "$OUTDIR" ]; then 
+	mkdir -p "$OUTDIR" && DIRMADE=true
+	
+	if [ $? != 0 ]; then
+		log_bad
+		exit 1
+	fi
+fi
+
+run libreoffice \
+	--convert-to "$FORMAT" \
+	--outdir "$OUTDIR" \
+	 "$INPUT" && \
+run exiftool -overwrite_original \
+	-AllDates=now \
+	-Title="$PDFTITLE" \
+	-Producer="$PDFCREATOR" \
+	-pdf:Subject="$PDFSUBJECT" \
+	-pdf:Keywords="$PDFKEYWORDS" \
+	-pdf:Author="$PDFAUTHOR" \
+	-pdf:Creator="$PDFCREATOR" \
+	-xmp:Subject="$PDFKEYWORDS" \
+	-xmp:Description="$PDFSUBJECT" \
+	-xmp:Creator="$PDFAUTHOR" \
+	-xmp:CreatorTool="$PDFCREATOR" \
+	-q "$TMPOUT"
+
+if [ "$TMPOUT" != "$OUTPUT" ]; then
+	mv "$TMPOUT" "$OUTPUT"
+fi
+	
+do_finalize $? "$TMPOUTPUT"
+

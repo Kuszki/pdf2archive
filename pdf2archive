@@ -10,7 +10,6 @@ VALIDATE=false
 MSGOPTS="-dQUIET -sstdout=/dev/null"
 VERAMSGOPTS=""
 DONE_FILE=""
-FAILED_FILE=""
 CPOLICY=1
 DIRMADE=false
 UPOLICY="skip"
@@ -92,28 +91,12 @@ while [ "$1" != "" ]; do
 			DEBUG=true
 			MSGOPTS=""
 			;;
-		--quality)
-			if [ "$VALUE" == "high" ]; then
-				QUALITYOPTS="-dPDFSETTINGS=/printer"
-			elif [ "$VALUE" == "medium" ]; then
-				QUALITYOPTS="-dPDFSETTINGS=/ebook"
-			elif [ "$VALUE" == "low" ]; then
-				QUALITYOPTS="-dPDFSETTINGS=/screen"
-			else
-				echo "  ERROR: unknown quality option '$VALUE'"
-				exit 1
-			fi
-			;;
 		--cleanmetadata)
-			[ -z ${PDFTITLE+x} ] && PDFTITLE=""
-			[ -z ${PDFAUTHOR+x} ] && PDFAUTHOR=""
-			[ -z ${PDFSUBJECT+x} ] && PDFSUBJECT=""
-			[ -z ${PDFKEYWORDS+x} ] && PDFKEYWORDS=""
-			[ -z ${PDFCREATOR+x} ] && PDFCREATOR=""
-			[ -z ${PDFPRODUCER+x} ] && PDFPRODUCER=""
-			[ -z ${PDFCREATIONDATE+x} ] && PDFCREATIONDATE=""
-			[ -z ${PDFMODDATE+x} ] && PDFMODDATE=""
-			[ -z ${PDFTRAPPED+x} ] && PDFTRAPPED=""
+			PDFTITLE=""
+			PDFAUTHOR=""
+			PDFSUBJECT=""
+			PDFKEYWORDS=""
+			PDFCREATOR=""
 			;;
 		--title)
 			PDFTITLE=$VALUE
@@ -147,6 +130,21 @@ while [ "$1" != "" ]; do
 			;;
 		--upolicy)
 			UPOLICY=$VALUE
+			;;
+		--mark)
+			WATERMARK=$VALUE
+			;;
+		--quality)
+			if [ "$VALUE" == "high" ]; then
+				QUALITYOPTS="-dPDFSETTINGS=/printer"
+			elif [ "$VALUE" == "medium" ]; then
+				QUALITYOPTS="-dPDFSETTINGS=/ebook"
+			elif [ "$VALUE" == "low" ]; then
+				QUALITYOPTS="-dPDFSETTINGS=/screen"
+			else
+				echo "  ERROR: unknown quality option '$VALUE'"
+				exit 1
+			fi
 			;;
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
@@ -184,49 +182,22 @@ fi
 
 if [ -f "$OUTPUT" ]; then
 		
-	if [ "$UPOLICY" == "update" ]; then	
-	
-		run exiftool -overwrite_original \
-			-AllDates=now \
-			-Title="$PDFTITLE" \
-			-Producer="$PDFCREATOR" \
-			-pdf:Subject="$PDFSUBJECT" \
-			-pdf:Keywords="$PDFKEYWORDS" \
-			-pdf:Author="$PDFAUTHOR" \
-			-pdf:Creator="$PDFCREATOR" \
-			-xmp:Subject="$PDFKEYWORDS" \
-			-xmp:Description="$PDFSUBJECT" \
-			-xmp:Creator="$PDFAUTHOR" \
-			-xmp:CreatorTool="$PDFCREATOR" \
-			-q "$OUTPUT"
-			
-		RET=$?
-		
-		do_finalize $RET "$OUTPUT"
-		exit $RET
-	
-	elif [ "$UPOLICY" == "skip" ]; then
-	
-		do_finalize 0 "$OUTPUT"
-		exit 0
-		
-	elif [ "$UPOLICY" != "overwrite" ]; then
-	
-		echo "  ERROR: unknown update policy option '$UPOLICY'"
-		exit 1
-		
-	fi
+	[ "$UPOLICY" == "skip" ] && exit 0	
+	[ "$UPOLICY" == "overwrite" ] && rm "$OUTPUT"
 
 fi
 
 #=====# FILE NAMES #=====#
 
-TMPOUTPUT=$(mktemp -p /dev/shm/ XXXXXXXXXX.pdf)
-TMPFILE=$(mktemp -p /dev/shm/ XXXXXXXXXX.tmp)
-TMPDIR=$(mktemp -d -p /dev/shm/ XXXXXXXXXX.dir)
+TMPDIR=$(mktemp -d -p /dev/shm/ XXXXXXXXXXXX.dir)
+
+TMPOUTPUT=$TMPDIR/out.pdf
+TMPFILE=$TMPDIR/tmp.tmp
+
 PSTMPFILE=$TMPDIR/PDFA_def.ps
 ICCTMPFILE=$TMPDIR/AdobeRGB1998.icc
-INFOTMPFILE=$TMPDIR/pdf_minimal_info.ps
+INFOTMPFILE=$TMPDIR/info.ps
+MARKTMPFILE=$TMPDIR/mark.ps
 
 #=====# GENERATE INFOTMPFILE #=====#
 
@@ -286,73 +257,83 @@ if $DEBUG; then
 	echo "  DEBUG: PDF author '$PDFAUTHOR'"
 	echo "  DEBUG: PDF subject '$PDFSUBJECT'"
 	echo "  DEBUG: PDF keywords '$PDFKEYWORDS'"
+	echo "  DEBUG: PDF watermark '$WATERMARK'"
 	echo "  DEBUG: PDF creator '$PDFCREATOR'"
-	echo "  DEBUG: PDF producer '$PDFPRODUCER'"
-	echo "  DEBUG: PDF creation date '$PDFCREATIONDATE'"
-	echo "  DEBUG: PDF modification date '$PDFMODDATE'"
 	echo "  DEBUG: PDF trapping '$PDFTRAPPED'"
 fi
 
 #=====# CREATE THE PS DEFINITION FILE #=====#
 
-echo \
-"%!
-% This prefix file for creating a PDF/A document is derived from
-% the sample included with Ghostscript 9.07, released under the
-% GNU Affero General Public License.
-% Modified 4/15/2013 by MCB Systems.
-
-% Feel free to modify entries marked with \"Customize\".
-
-% This assumes an ICC profile to reside in the file (AdobeRGB1998.icc),
-% unless the user modifies the corresponding line below.
-
-% The color space described by the ICC profile must correspond to the
-% ProcessColorModel specified when using this prefix file (GRAY with
-% DeviceGray, RGB with DeviceRGB, and CMYK with DeviceCMYK).
-
-% Define entries in the document Info dictionary :
-
-/ICCProfile ($ICCTMPFILE)   % Customize.
+echo "%% ICCProfile file
+/ICCProfile ($ICCTMPFILE)
 def
+[ /Title (Document)" > $PSTMPFILE
 
-[ /Title (Document)				       % Customize.
-%  /Author ()
-%  /Subject ()
-%  /Keywords ()
-%  /Creator ()
-%  /Producer						  % Reserved to GS
-%  /CreationDate					  % Reserved to GS
-%  /ModDate						  % Reserved to GS" > $PSTMPFILE
 if [ "$PDFTRAPPED" != "" ]; then
   echo "  /Trapped $PDFTRAPPED" >> $PSTMPFILE
 fi
+
 echo \
-"  /DOCINFO pdfmark
-
-% Define an ICC profile :
-
+"/DOCINFO pdfmark
 [/_objdef {icc_PDFA} /type /stream /OBJ pdfmark
 [{icc_PDFA} <</N systemdict /ProcessColorModel get /DeviceGray eq {1} {systemdict /ProcessColorModel get /DeviceRGB eq {3} {4} ifelse} ifelse >> /PUT pdfmark
 [{icc_PDFA} ICCProfile (r) file /PUT pdfmark
-
-% Define the output intent dictionary :
-
 [/_objdef {OutputIntent_PDFA} /type /dict /OBJ pdfmark
 [{OutputIntent_PDFA} <<
-  /Type /OutputIntent			 % Must be so (the standard requires).
-  /S /GTS_PDFA1				   % Must be so (the standard requires).
-  /DestOutputProfile {icc_PDFA}			% Must be so (see above).
-  /OutputConditionIdentifier (AdobeRGB1998)	  % Customize
+	/Type /OutputIntent
+	/S /GTS_PDFA1
+	/DestOutputProfile {icc_PDFA}
+	/OutputConditionIdentifier (AdobeRGB1998)
 >> /PUT pdfmark
-[{Catalog} <</OutputIntents [ {OutputIntent_PDFA} ]>> /PUT pdfmark
-" >> $PSTMPFILE
+[{Catalog} <</OutputIntents [ {OutputIntent_PDFA} ]>> /PUT pdfmark" >> $PSTMPFILE
 
 #=====# CREATE THE COLOR PROFILE FILE #=====#
 
 echo -n -e "\\x00\\x00\\x02\\x30\\x41\\x44\\x42\\x45\\x02\\x10\\x00\\x00\\x6d\\x6e\\x74\\x72\\x52\\x47\\x42\\x20\\x58\\x59\\x5a\\x20\\x07\\xd0\\x00\\x08\\x00\\x0b\\x00\\x13\\x00\\x33\\x00\\x3b\\x61\\x63\\x73\\x70\\x41\\x50\\x50\\x4c\\x00\\x00\\x00\\x00\\x6e\\x6f\\x6e\\x65\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\xf6\\xd6\\x00\\x01\\x00\\x00\\x00\\x00\\xd3\\x2d\\x41\\x44\\x42\\x45\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x0a\\x63\\x70\\x72\\x74\\x00\\x00\\x00\\xfc\\x00\\x00\\x00\\x32\\x64\\x65\\x73\\x63\\x00\\x00\\x01\\x30\\x00\\x00\\x00\\x6b\\x77\\x74\\x70\\x74\\x00\\x00\\x01\\x9c\\x00\\x00\\x00\\x14\\x62\\x6b\\x70\\x74\\x00\\x00\\x01\\xb0\\x00\\x00\\x00\\x14\\x72\\x54\\x52\\x43\\x00\\x00\\x01\\xc4\\x00\\x00\\x00\\x0e\\x67\\x54\\x52\\x43\\x00\\x00\\x01\\xd4\\x00\\x00\\x00\\x0e\\x62\\x54\\x52\\x43\\x00\\x00\\x01\\xe4\\x00\\x00\\x00\\x0e\\x72\\x58\\x59\\x5a\\x00\\x00\\x01\\xf4\\x00\\x00\\x00\\x14\\x67\\x58\\x59\\x5a\\x00\\x00\\x02\\x08\\x00\\x00\\x00\\x14\\x62\\x58\\x59\\x5a\\x00\\x00\\x02\\x1c\\x00\\x00\\x00\\x14\\x74\\x65\\x78\\x74\\x00\\x00\\x00\\x00\\x43\\x6f\\x70\\x79\\x72\\x69\\x67\\x68\\x74\\x20\\x32\\x30\\x30\\x30\\x20\\x41\\x64\\x6f\\x62\\x65\\x20\\x53\\x79\\x73\\x74\\x65\\x6d\\x73\\x20\\x49\\x6e\\x63\\x6f\\x72\\x70\\x6f\\x72\\x61\\x74\\x65\\x64\\x00\\x00\\x00\\x64\\x65\\x73\\x63\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x11\\x41\\x64\\x6f\\x62\\x65\\x20\\x52\\x47\\x42\\x20\\x28\\x31\\x39\\x39\\x38\\x29\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x58\\x59\\x5a\\x20\\x00\\x00\\x00\\x00\\x00\\x00\\xf3\\x51\\x00\\x01\\x00\\x00\\x00\\x01\\x16\\xcc\\x58\\x59\\x5a\\x20\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x63\\x75\\x72\\x76\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x02\\x33\\x00\\x00\\x63\\x75\\x72\\x76\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x02\\x33\\x00\\x00\\x63\\x75\\x72\\x76\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x02\\x33\\x00\\x00\\x58\\x59\\x5a\\x20\\x00\\x00\\x00\\x00\\x00\\x00\\x9c\\x18\\x00\\x00\\x4f\\xa5\\x00\\x00\\x04\\xfc\\x58\\x59\\x5a\\x20\\x00\\x00\\x00\\x00\\x00\\x00\\x34\\x8d\\x00\\x00\\xa0\\x2c\\x00\\x00\\x0f\\x95\\x58\\x59\\x5a\\x20\\x00\\x00\\x00\\x00\\x00\\x00\\x26\\x31\\x00\\x00\\x10\\x2f\\x00\\x00\\xbe\\x9c" > $ICCTMPFILE
 
+#=====# CREATE THE WATERMARK PROFILE FILE #=====#
+
+echo "%% Watermark ps file
+/watermarkText { ($WATERMARK) } def
+/watermarkFont { /TimesNewRomanBold 20 selectfont } def
+/watermarkColor { 1 0 0 setrgbcolor } def
+/watermarkAlpha { 0.5 .setfillconstantalpha } def
+/watermarkAngle { 0 } def
+
+/pageWidth { currentpagedevice /PageSize get 0 get } def
+/pageHeight { currentpagedevice /PageSize get 1 get } def
+
+<<
+	/EndPage
+	{
+		2 eq { pop false }
+		{
+			gsave
+			watermarkFont
+			watermarkColor
+			watermarkAlpha
+			
+			pageWidth pageHeight translate
+			0 0 moveto
+			watermarkText false charpath flattenpath pathbbox
+			4 2 roll pop pop
+			-5 -5 moveto
+			
+			watermarkAngle rotate
+			-1 mul exch -1 mul exch
+			rmoveto
+			
+			watermarkText show
+
+			grestore
+			true
+		} ifelse
+	} bind
+>> setpagedevice" > "$MARKTMPFILE"
+
 #=====# DO THE ACTUAL CONVERSION #=====#
+
+[ "$WATERMARK" == "" ] && MARKTMPFILE=""
 
 if [ ! -d "$OUTDIR" ]; then 
 	mkdir -p "$OUTDIR" && DIRMADE=true
@@ -364,7 +345,7 @@ if [ ! -d "$OUTDIR" ]; then
 fi
 
 run gs $MSGOPTS \
-	-dBATCH -dNOPAUSE -dNOOUTERSAVE \
+	-dBATCH -dNOPAUSE -dNOOUTERSAVE -dALLOWPSTRANSPARENCY \
 	-dEmbedAllFonts=true -dSubsetFonts=true \
 	-dCompressFonts=true -dCompressPages=true \
 	-sColorConversionStrategy=RGB \
@@ -374,16 +355,14 @@ run gs $MSGOPTS \
 	-dAutoFilterColorImages=false \
 	-dAutoFilterGrayImages=false \
 	-sDEVICE=pdfwrite \
-	-dUseCIEColor \
-	-sOutputFile="$TMPFILE" "$INPUT" && \
+	-sOutputFile="$TMPFILE" "$INPUT" $MARKTMPFILE && \
 run gs $MSGOPTS \
 	-dPDFA=3 -dBATCH -dNOPAUSE -dNOOUTERSAVE $QUALITYOPTS \
 	-dPDFACompatibilityPolicy=$CPOLICY \
 	-sProcessColorModel=DeviceRGB \
 	-sColorConversionStrategy=RGB \
-	-sOutputICCProfile=$ICCTMPFILE \
+	-sOutputICCProfile="$ICCTMPFILE" \
 	-sDEVICE=pdfwrite \
-	-dUseCIEColor \
 	-sOutputFile="$TMPOUTPUT" "$TMPFILE" $PSTMPFILE && \
 run exiftool -overwrite_original \
 	-AllDates=now \
@@ -402,7 +381,4 @@ cp "$TMPOUTPUT" "$OUTPUT"
 	
 do_finalize $? "$TMPOUTPUT"
 
-rm "$TMPFILE"
-rm "$TMPOUTPUT"
 rm -R "$TMPDIR"
-
