@@ -127,6 +127,9 @@ Convert 'input.pdf' in PDF/A-1B format and validate the result:
   ./pdf2archive --validate input.pdf
 ```
 
+## Credits
+`pdf2archive` script was originaly created by [matteosecli](https://github.com/matteosecli) and this is fork of [pdf2archive](https://github.com/matteosecli/pdf2archive). Big thanks @matteosecli.
+
 ## Licensing
 + __PDF2ARCHIVE__ is under GPLv3+.
 + The file __`AdobeRGB1998.icc`__ (included in binary form for portability reasons) is licensed in compliance with Adobe's license agreement: https://www.adobe.com/support/downloads/iccprofiles/icc_eula_win_dist.html.
