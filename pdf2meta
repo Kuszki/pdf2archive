@@ -5,6 +5,7 @@ source $(dirname $0)/pdf2common
 VERSION="0.0.1"
 INFILE=""
 INPUT=""
+METASEP=", "
 DEBUG=false
 
 #=====# INPUT PARSER #=====#
@@ -61,6 +62,9 @@ while [ "$1" != "" ]; do
 		--pass)
 			PASS_FILE=$VALUE
 			;;
+		--sep)
+			METASEP=$VALUE
+			;;
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
 				INPUT=$PARAM
@@ -86,6 +90,14 @@ if [ ! -f "$INPUT" ]; then
 
 fi
 
+METADUMP=$(pdfinfo "$INPUT")
+
+[ -z ${PDFTITLE+x} ] && PDFTITLE=$(echo "$METADUMP" | grep "^Title:" | sed "s/^Title:\\s*//")
+[ -z ${PDFAUTHOR+x} ] && PDFAUTHOR=$(echo "$METADUMP" | grep "^Author:" | sed "s/^Author:\\s*//")
+[ -z ${PDFSUBJECT+x} ] && PDFSUBJECT=$(echo "$METADUMP" | grep "^Subject:" | sed "s/^Subject:\\s*//")
+[ -z ${PDFKEYWORDS+x} ] && PDFKEYWORDS=$(echo "$METADUMP" | grep "^Keywords:" | sed "s/^Keywords:\\s*//")
+[ -z ${PDFCREATOR+x} ] && PDFCREATOR=$(echo "$METADUMP" | grep "^Creator:" | sed "s/^Creator:\\s*//")
+
 if $DEBUG; then
 	echo "  DEBUG: running PDF2META, version $VERSION"
 	echo "  DEBUG: using Exiftool binary at $(which exiftool), version $(exiftool -ver)"
@@ -109,6 +121,6 @@ run exiftool -overwrite_original \
 	-xmp:Description="$PDFSUBJECT" \
 	-xmp:Creator="$PDFAUTHOR" \
 	-xmp:CreatorTool="$PDFCREATOR" \
-	-q "$INPUT"
+	-q -sep "$METASEP" "$INPUT"
 
 do_finalize $? "$INPUT"

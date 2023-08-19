@@ -7,6 +7,7 @@ FORMAT='pdf:draw_pdf_Export:{"SelectPdfVersion":{"type":"long","value":"3"}}'
 DIRMADE=false
 UPOLICY="skip"
 DEBUG=false
+METASEP=", "
 
 INFILE=""
 INPUT=""
@@ -68,6 +69,9 @@ while [ "$1" != "" ]; do
 		--upolicy)
 			UPOLICY=$VALUE
 			;;
+		--sep)
+			METASEP=$VALUE
+			;;
 		*.pdf)
 			if [ "$INPUT" == "" ]; then
 				INPUT=$PARAM
@@ -111,6 +115,14 @@ if [ -f "$OUTPUT" ]; then
 
 fi
 
+METADUMP=$(pdfinfo "$INPUT")
+
+[ -z ${PDFTITLE+x} ] && PDFTITLE=$(echo "$METADUMP" | grep "^Title:" | sed "s/^Title:\\s*//")
+[ -z ${PDFAUTHOR+x} ] && PDFAUTHOR=$(echo "$METADUMP" | grep "^Author:" | sed "s/^Author:\\s*//")
+[ -z ${PDFSUBJECT+x} ] && PDFSUBJECT=$(echo "$METADUMP" | grep "^Subject:" | sed "s/^Subject:\\s*//")
+[ -z ${PDFKEYWORDS+x} ] && PDFKEYWORDS=$(echo "$METADUMP" | grep "^Keywords:" | sed "s/^Keywords:\\s*//")
+[ -z ${PDFCREATOR+x} ] && PDFCREATOR=$(echo "$METADUMP" | grep "^Creator:" | sed "s/^Creator:\\s*//")
+
 if $DEBUG; then
 	echo "  DEBUG: running PDF2LIBRE, version $VERSION"
 	echo "  DEBUG: using Libreoffice binary at $(which libreoffice), version $(libreoffice --version)"
@@ -149,7 +161,7 @@ run exiftool -overwrite_original \
 	-xmp:Description="$PDFSUBJECT" \
 	-xmp:Creator="$PDFAUTHOR" \
 	-xmp:CreatorTool="$PDFCREATOR" \
-	-q "$TMPOUT" && \
+	-q -sep "$METASEP" "$TMPOUT" && \
 cp "$TMPOUT" "$OUTPUT"
 
 do_finalize $? "$TMPOUT"
