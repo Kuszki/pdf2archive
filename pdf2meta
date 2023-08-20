@@ -121,6 +121,6 @@ run exiftool -overwrite_original \
 	-xmp:Description="$PDFSUBJECT" \
 	-xmp:Creator="$PDFAUTHOR" \
 	-xmp:CreatorTool="$PDFCREATOR" \
-	-q -sep "$METASEP" "$INPUT"
+	-q -all= -sep "$METASEP" "$INPUT"
 
 do_finalize $? "$INPUT"
