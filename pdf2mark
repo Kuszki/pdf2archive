@@ -2,9 +2,18 @@
 
 source $(dirname $0)/pdf2common
 
+#=====# CHECKS #=====#
+
+if [ "$(which gs)" == "" ]; then
+	echo "ERROR: Ghostscript is not installed or it's not in the path"
+	exit
+fi
+
 if [ "$1" == "" ]; then
 	exit
 fi
+
+#=====# INPUT PARSER #=====#
 while [ "$1" != "" ]; do
 	PARAM=`echo $1 | awk -F= '{print $1}'`
 	VALUE=`echo $1 | awk -F= '{print $2}'`

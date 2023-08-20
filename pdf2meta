@@ -8,6 +8,13 @@ INPUT=""
 METASEP=", "
 DEBUG=false
 
+#=====# CHECKS #=====#
+
+if [ "$(which exiftool)" == "" ]; then
+	echo "ERROR: Exiftool is not installed or it's not in the path"
+	exit
+fi
+
 #=====# INPUT PARSER #=====#
 if [ "$1" == "" ]; then
 	exit

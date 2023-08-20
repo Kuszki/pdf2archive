@@ -10,8 +10,19 @@ UPOLICY="skip"
 METASEP=", "
 
 #=====# CHECKS #=====#
+
 if [ "$(which gs)" == "" ]; then
 	echo "ERROR: Ghostscript is not installed or it's not in the path"
+	exit
+fi
+
+if [ "$(which exiftool)" == "" ]; then
+	echo "ERROR: Exiftool is not installed or it's not in the path"
+	exit
+fi
+
+if [ "$(which pdfinfo)" == "" ]; then
+	echo "ERROR: Pdfinfo is not installed or it's not in the path"
 	exit
 fi
 

@@ -13,6 +13,24 @@ INFILE=""
 INPUT=""
 OUTPUT=""
 
+#=====# CHECKS #=====#
+
+if [ "$(which libreoffice)" == "" ]; then
+	echo "ERROR: LibreOffice is not installed or it's not in the path"
+	exit
+fi
+
+if [ "$(which exiftool)" == "" ]; then
+	echo "ERROR: Exiftool is not installed or it's not in the path"
+	exit
+fi
+
+if [ "$(which pdfinfo)" == "" ]; then
+	echo "ERROR: Pdfinfo is not installed or it's not in the path"
+	exit
+fi
+
+#=====# INPUT PARSER #=====#
 if [ "$1" == "" ]; then
 	exit
 fi
